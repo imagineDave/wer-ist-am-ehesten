@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wer ist am ehesten?</title>
+<meta name="description" content="Anonymes Ranking für die Pause: 16 Fragen, 11 Leute, am Ende Platz 1 bis 3.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one phone-first column (max 560px); sticker-style hard shadows only on things you tap and on the live question card */
+:root {
+  --bg: #EEF0FF;
+  --dot: #D5D9F6;
+  --surface: #FFFFFF;
+  --ink: #16173D;
+  --muted: #565A88;
+  --border: #16173D;
+  --shadow-c: #16173D;
+  --accent: #D81B60;
+  --accent-ink: #FFFFFF;
+  --gold: #FFC93C;
+  --silver: #C8CDE8;
+  --bronze: #EE9E62;
+  --on-medal: #16173D;
+  --track: #E1E4FA;
+  --hl: #FFC93C;
+  --focus: #3D5AFE;
+  --av-l: 42%;
+  --av-ink: #FFFFFF;
+  --f-display: "Dela Gothic One", "Arial Black", Impact, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101130; --dot: #1E2050; --surface: #1B1C45; --ink: #F0F1FF; --muted: #A6A9D8;
+    --border: #C9CCF5; --shadow-c: #6C70E8; --accent: #FF5C93; --accent-ink: #1A0710;
+    --track: #2A2C60; --hl: #B8285E; --focus: #8EA0FF; --av-l: 72%; --av-ink: #121330;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.4px);
+  background-size: 20px 20px;
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-block: 22px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+
+/* Hero */
+.hero { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.hero h1 {
+  font-family: var(--f-display); font-weight: 400;
+  font-size: clamp(2.2rem, 10vw, 3.3rem); line-height: 1.04; letter-spacing: -.01em;
+}
+.hl { background: linear-gradient(transparent 58%, var(--hl) 58%, var(--hl) 92%, transparent 92%); padding: 0 .06em; }
+.lede { font-size: 17px; color: var(--muted); max-width: 46ch; }
+
+/* Generic blocks */
+.card { background: var(--surface); border: 2px solid var(--border); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.note { font-size: 15px; color: var(--muted); }
+.msg { font-weight: 700; color: var(--accent); }
+
+.btn {
+  font: inherit; font-weight: 800; font-size: 17px;
+  border: 2px solid var(--border); border-radius: 14px;
+  padding: 13px 18px; min-height: 52px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow-c);
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  cursor: pointer; transition: transform .08s ease, box-shadow .08s ease;
+  text-align: center;
+}
+.btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--shadow-c); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.small { font-size: 15px; min-height: 42px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--shadow-c); }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.link {
+  font: inherit; font-weight: 700; background: none; border: 0; padding: 6px 0;
+  color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.row-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.row-btns > * { flex: 1 1 200px; }
+
+/* Avatars */
+.av {
+  --h: 220;
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background: hsl(var(--h) 68% var(--av-l)); color: var(--av-ink);
+  border: 2px solid var(--border);
+  font-weight: 800; font-size: 15px; line-height: 1;
+}
+.av.lg { width: 44px; height: 44px; font-size: 19px; }
+
+/* Status: one slot per person in the ballot box */
+.status-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.count { font-family: var(--f-display); font-size: 40px; line-height: 1; }
+.count small { font-family: var(--f-mono); font-size: 18px; color: var(--muted); }
+.slots { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 6px; }
+.slot { aspect-ratio: 3 / 4; max-width: 100%; border-radius: 6px; border: 2px dashed var(--muted); display: grid; place-items: center; }
+.slot.filled { border-style: solid; border-color: var(--border); background: var(--accent); color: var(--accent-ink); }
+.slot svg { width: 70%; height: 70%; }
+
+/* Question list teaser */
+.qlist { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.qlist li { display: grid; grid-template-columns: 32px 1fr; gap: 8px; padding: 9px 0; border-top: 1px dashed var(--track); font-weight: 600; }
+.qlist li:first-child { border-top: 0; }
+.qlist .mono { color: var(--muted); font-size: 13px; padding-top: 3px; }
+
+/* Voting flow */
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.progress { height: 10px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--accent); transition: width .25s ease; }
+.qcard {
+  background: var(--gold); color: var(--on-medal);
+  border: 2px solid var(--border); border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--shadow-c);
+  padding: 22px 20px 24px; display: flex; flex-direction: column; gap: 12px;
+}
+.qcard h2 { font-family: var(--f-display); font-weight: 400; font-size: clamp(1.5rem, 6.4vw, 2rem); line-height: 1.15; }
+.tag {
+  align-self: flex-start; font-family: var(--f-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  border: 2px solid currentColor; border-radius: 99px; padding: 2px 10px;
+}
+.names { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.pick {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 56px; padding: 9px 12px;
+  border: 2px solid var(--border); border-radius: 14px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow-c);
+  font: inherit; font-weight: 700; font-size: 17px; text-align: left;
+  cursor: pointer; transition: transform .08s ease, box-shadow .08s ease, background .12s;
+}
+.pick:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow-c); }
+.pick[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.hint { font-size: 14px; color: var(--muted); text-align: center; }
+
+.center { text-align: center; align-items: center; }
+.bigicon { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); border: 2px solid var(--border); box-shadow: 4px 4px 0 var(--shadow-c); }
+.bigicon svg { width: 38px; height: 38px; }
+.title2 { font-family: var(--f-display); font-weight: 400; font-size: 28px; line-height: 1.15; }
+
+/* Results */
+.results { display: flex; flex-direction: column; gap: 16px; }
+.results-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.results-head h2 { font-family: var(--f-display); font-weight: 400; font-size: 30px; }
+.rcard { background: var(--surface); border: 2px solid var(--border); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.rcard-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rcard h3 { font-size: 19px; font-weight: 800; line-height: 1.3; text-wrap: balance; }
+.badge { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; background: var(--ink); color: var(--bg); }
+.cover {
+  border: 2px dashed var(--muted); border-radius: 14px; min-height: 120px;
+  display: grid; place-items: center; padding: 16px;
+  background: repeating-linear-gradient(-45deg, transparent 0 10px, var(--track) 10px 20px);
+}
+.ranks { display: flex; flex-direction: column; gap: 10px; }
+.rk { display: grid; grid-template-columns: 32px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.medal { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-family: var(--f-mono); font-weight: 700; color: var(--on-medal); border: 2px solid var(--border); }
+.m1 { background: var(--gold); } .m2 { background: var(--silver); } .m3 { background: var(--bronze); }
+.rk-name { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.rk-name b { font-size: 16px; }
+.rk.first b { font-size: 20px; }
+.bar { height: 10px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); }
+.votes { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.pop { animation: pop .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.94); } to { opacity: 1; transform: none; } }
+.rcard.total { border-width: 3px; box-shadow: 6px 6px 0 var(--shadow-c); }
+
+/* Host panel */
+.host { border-style: dashed; }
+.host h2 { font-size: 16px; font-weight: 800; }
+.confirm { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--track); }
+
+.loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 600; }
+.spin { width: 18px; height: 18px; border: 3px solid var(--track); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pop, .spin { animation: none; }
+  .btn, .pick, .progress span { transition: none; }
+}
+</style>
+</head>
+<body>
+<div id="app" class="wrap" aria-live="polite"></div>
+<noscript><p style="padding:16px">Bitte JavaScript aktivieren, sonst klappt die Abstimmung nicht.</p></noscript>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Einstellungen ----------
+  // Kanal, über den die Stimmen laufen. Für eine komplett neue, getrennte Umfrage einfach den Text ändern.
+  const TOPIC = "wiae-507bf71c5d0d1c72233d";
+  const BASE = "https://ntfy.sh/" + TOPIC;
+  const ARCHIVE_URL = "https://raw.githubusercontent.com/imagineDave/wer-ist-am-ehesten/main/votes-archive.json";
+
+  const NAMES = ["Sarah", "Liya", "Ronja", "David", "Luis", "Levin", "Moritz", "Jannis", "Joni", "Theo", "Ronon"];
+  const HUES  = [345, 18, 40, 200, 150, 265, 95, 225, 300, 175, 120];
+  const EXPECTED = NAMES.length; // so viele Stimmzettel braucht es bis zur Auflösung
+  const PER_DAY = 16;            // Fragen pro Woche (Name historisch)
+  const SWITCH_HOUR = 22;        // Wechsel jeden Sonntag um 22 Uhr deutscher Zeit
+
+  // ---------- Fragen der Woche ----------
+  // Der Pool steht in questions.json. Neue Fragen bitte immer HINTEN anhängen,
+  // weil die Position in der Liste die ID der Frage ist.
+  //
+  // Ablauf: Alle Fragen werden gemischt (mit festem Startwert, damit jedes Handy dieselbe
+  // Reihenfolge bekommt). Jede Woche kommen die nächsten 16 dran. Erst wenn der Pool
+  // durch ist (bei 500 Fragen nach 31 Wochen), wird neu gemischt.
+  let QUESTIONS = [];
+
+  // Wanduhrzeit in Berlin als "UTC-Millisekunden" (Sommer-/Winterzeit erledigt Intl)
+  function berlinWallMs(d) {
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    }).formatToParts(d).map((x) => [x.type, x.value]));
+    return Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute);
+  }
+  // Wochennummer: Uhr um 2 Stunden vorstellen, dann ist "Sonntag 22 Uhr" = "Montag 0 Uhr"
+  function berlinDay(d = new Date()) {
+    const days = Math.floor((berlinWallMs(d) + (24 - SWITCH_HOUR) * 3600000) / 86400000);
+    return "w" + Math.floor((days + 3) / 7); // 1.1.1970 war ein Donnerstag, +3 richtet auf Montag aus
+  }
+  function dayNumber(key) { return parseInt(key.slice(1), 10); }
+  function rng(seed) { // mulberry32: kleiner Zufallsgenerator, der aus demselben Startwert immer dieselben Zahlen macht
+    return () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const GAP_DAYS = 4;            // Fragen der letzten 4 Wochen eines Durchgangs kommen am Anfang des nächsten nicht dran
+  const START_DAY = 2900;        // Wochennummer (Mitte 2025); ab hier wird die Reihenfolge berechnet
+  const orderCache = new Map();
+
+  function shuffled(len, cycle) {
+    const order = Array.from({ length: len }, (_, i) => i);
+    const rand = rng(cycle * 7919 + 2026);
+    for (let i = len - 1; i > 0; i--) { // Fisher-Yates-Mischen
+      const j = Math.floor(rand() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return order;
+  }
+  function cycleOrder(cycle, len, perCycle) {
+    const key = cycle + ":" + len;
+    if (orderCache.has(key)) return orderCache.get(key);
+    const first = Math.floor(START_DAY / perCycle);
+    let order;
+    for (let c = Math.max(first, cycle - 1000); c <= cycle; c++) { // Durchgänge nacheinander, gemerkt im Cache
+      const k = c + ":" + len;
+      if (orderCache.has(k)) { order = orderCache.get(k); continue; }
+      const cur = shuffled(len, c);
+      if (order) {
+        // Was am Ende des letzten Durchgangs dran war, nach hinten schieben
+        const used = perCycle * PER_DAY, head = Math.min(GAP_DAYS * PER_DAY, used);
+        const recent = new Set(order.slice(used - head, used));
+        let j = cur.length - 1;
+        for (let i = 0; i < head; i++) {
+          if (!recent.has(cur[i])) continue;
+          while (j > head && recent.has(cur[j])) j--;
+          if (j <= head) break;
+          [cur[i], cur[j]] = [cur[j], cur[i]];
+          j--;
+        }
+      }
+      orderCache.set(k, cur);
+      order = cur;
+    }
+    return order;
+  }
+  function questionsFor(day, pool) {
+    const perCycle = Math.max(1, Math.floor(pool.length / PER_DAY)); // Wochen, bis der Pool einmal durch ist (500 → 31)
+    const n = dayNumber(day);
+    const order = cycleOrder(Math.floor(n / perCycle), pool.length, perCycle);
+    const slot = n % perCycle;
+    return order.slice(slot * PER_DAY, slot * PER_DAY + PER_DAY)
+      .map((i) => ({ id: "p" + i, tag: pool[i].t, text: pool[i].q }));
+  }
+  // Ende der Woche: der Sonntag, an dem um 22 Uhr gewechselt wird
+  const dateLabel = (key) => new Date((dayNumber(key) * 7 + 3) * 86400000)
+    .toLocaleDateString("de-DE", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+
+  const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const ICON_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const hue = (n) => HUES[NAMES.indexOf(n)] ?? 220;
+  const av = (n, cls = "") => `<span class="av ${cls}" style="--h:${hue(n)}" aria-hidden="true">${n[0]}</span>`;
+  const plural = (c, one, many) => `${c} ${c === 1 ? one : many}`;
+  const newId = () => {
+    try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  };
+  const isHost = () => location.hash === "#leitung";
+
+  // Was dieses Gerät gerade tut
+  const ui = { view: "home", answers: {}, idx: 0, ballotId: null, open: {}, anim: new Set(), confirm: null, busy: false, msg: "", advancing: false };
+  // Gemeinsamer Stand, abgeleitet aus allen Nachrichten im Kanal
+  const st = { status: "loading", slow: false, day: berlinDay(), round: "", ballots: [], revealed: false };
+  let POOL = [];
+  const seen = new Map(); // ntfy-Nachrichten-ID -> { time, body }
+
+  const app = document.getElementById("app");
+
+  // Merkt sich pro Runde, wie oft auf diesem Gerät abgestimmt wurde (nur als Erinnerung, keine Sperre)
+  const devKey = () => `wiae:${TOPIC}:r${st.round}`;
+  const deviceCount = () => { try { return Number(localStorage.getItem(devKey())) || 0; } catch (e) { return 0; } };
+  const bumpDevice = () => { try { localStorage.setItem(devKey(), String(deviceCount() + 1)); } catch (e) {} };
+
+  const allVoted = () => st.ballots.length >= EXPECTED;
+  const showResults = () => st.revealed || allVoted();
+
+  // ---------- Nachrichten verarbeiten ----------
+  function ingest(ev) {
+    if (!ev || ev.event !== "message" || typeof ev.id !== "string" || seen.has(ev.id)) return false;
+    let body;
+    try { body = JSON.parse(ev.message); } catch (e) { return false; }
+    if (!body || typeof body !== "object") return false;
+    seen.set(ev.id, { time: Number(ev.time) || 0, body });
+    return true;
+  }
+  function derive() {
+    const list = [...seen.values()].sort((a, b) => a.time - b.time);
+    // Jeder Tag ist eine eigene Runde. "Neue Runde" in der Spielleitung zählt innerhalb des Tages hoch.
+    let resets = 0;
+    for (const m of list) if (m.body.k === "reset" && m.body.day === st.day && Number.isInteger(m.body.n) && m.body.n > resets) resets = m.body.n;
+    const round = st.day + "#" + resets;
+    st.resets = resets;
+    const ballots = new Map();
+    let revealed = false;
+    for (const { body } of list) {
+      if (body.r !== round) continue;
+      if (body.k === "b" && typeof body.id === "string" && body.a && typeof body.a === "object") ballots.set(body.id, body.a);
+      if (body.k === "reveal") revealed = true;
+    }
+    st.round = round;
+    st.ballots = [...ballots.values()];
+    st.revealed = revealed;
+  }
+
+  // ---------- Views ----------
+  function viewHome() {
+    const n = st.ballots.length;
+    const reveal = st.status === "ready" && showResults();
+    let h = `
+      <header class="hero">
+        <p class="eyebrow">Diese Woche · bis ${dateLabel(st.day)}, ${SWITCH_HOUR} Uhr</p>
+        <h1>Wer ist am <span class="hl">ehesten</span> …?</h1>
+        <p class="lede">Jede Woche ${PER_DAY} neue Fragen über euch elf. Niemand sieht, wen du gewählt hast. Sobald alle ${EXPECTED} abgestimmt haben, zeigt die Seite für jede Frage Platz 1 bis 3.</p>
+      </header>`;
+
+    h += `<section class="card" aria-label="Abstimmungsstand">`;
+    if (st.status === "loading") {
+      h += `<div class="loading"><span class="spin" aria-hidden="true"></span>Stimmen werden geladen …</div>`;
+      if (st.slow) h += `<p class="note">Das dauert ungewöhnlich lange. Prüf deine Internetverbindung.</p>`;
+    } else if (st.status === "error") {
+      h += `<p><b>Die Abstimmung ist gerade nicht erreichbar.</b></p>
+        <p class="note">Prüf deine Internetverbindung und versuch es nochmal.</p>
+        <button class="btn small" data-act="retry">Nochmal laden</button>`;
+    } else {
+      h += `<div class="status-top"><span class="count">${n}<small>/${EXPECTED}</small></span><span><b>${allVoted() ? "Alle haben abgestimmt" : "haben abgestimmt"}</b></span></div>
+        <div class="slots" role="img" aria-label="${n} von ${EXPECTED} Stimmzetteln abgegeben">${Array.from({ length: EXPECTED }, (_, i) => `<span class="slot ${i < n ? "filled" : ""}">${i < n ? ICON_CHECK : ""}</span>`).join("")}</div>`;
+      if (!reveal) h += `<p class="note">${n === 0 ? "Noch hat niemand abgestimmt. Fang du an!" : `Es fehlen noch ${plural(Math.max(EXPECTED - n, 0), "Stimme", "Stimmen")}.`}</p>`;
+    }
+    h += `</section>`;
+
+    if (st.status === "ready") {
+      const mine = deviceCount();
+      if (!reveal) {
+        if (mine === 0) {
+          h += `<button class="btn primary block" data-act="start">Jetzt abstimmen ${ICON_ARROW}</button>
+            <p class="hint">Ihr sitzt zusammen? Ihr könnt auch nacheinander auf einem Handy abstimmen.</p>`;
+        } else {
+          h += `<section class="card"><p><b>Auf diesem Handy wurde schon abgestimmt.</b></p>
+            <p class="note">Die Seite aktualisiert sich von selbst, sobald alle durch sind.</p>
+            <button class="btn small" data-act="start">Jemand anderes stimmt auf diesem Handy ab</button></section>`;
+        }
+        h += teaser();
+      } else {
+        if (!allVoted()) h += `<button class="btn block" data-act="start">Noch nachträglich abstimmen</button>`;
+        h += viewResults();
+      }
+    }
+
+    if (isHost() && st.status === "ready") h += hostPanel();
+    h += `<footer>Die Stimmzettel enthalten keine Namen und laufen über den Dienst ntfy.sh und werden alle paar Stunden im GitHub-Repo gesichert.</footer>`;
+    return h;
+  }
+
+  function teaser() {
+    return `<section class="card" aria-label="Die Fragen">
+      <p class="eyebrow">Die ${QUESTIONS.length} Fragen dieser Woche</p>
+      <ol class="qlist">${QUESTIONS.map((q, i) => `<li><span class="mono">${pad(i + 1)}</span><span>${q.text}</span></li>`).join("")}</ol>
+    </section>`;
+  }
+
+  function hostPanel() {
+    let h = `<section class="card host" aria-label="Spielleitung"><div><h2>Spielleitung</h2><p class="note">Diesen Bereich sieht nur, wer die Seite mit #leitung am Ende öffnet.</p></div>`;
+    if (ui.confirm === "reveal") {
+      h += `<div class="confirm"><p><b>Ranking jetzt für alle zeigen?</b> Es fehlen noch ${plural(Math.max(EXPECTED - st.ballots.length, 0), "Stimme", "Stimmen")}.</p>
+        <div class="row-btns"><button class="btn small primary" data-act="doReveal" ${ui.busy ? "disabled" : ""}>Ja, auflösen</button><button class="btn small" data-act="cancel">Abbrechen</button></div></div>`;
+    } else if (ui.confirm === "reset") {
+      h += `<div class="confirm"><p><b>Neue Runde starten?</b> Die Stimmen dieser Woche zählen dann nicht mehr. Die Fragen bleiben dieselben, neue kommen am Sonntag um ${SWITCH_HOUR} Uhr.</p>
+        <div class="row-btns"><button class="btn small primary" data-act="doReset" ${ui.busy ? "disabled" : ""}>Ja, neue Runde</button><button class="btn small" data-act="cancel">Abbrechen</button></div></div>`;
+    } else {
+      h += `<p class="note mono">Woche bis ${dateLabel(st.day)} · Runde ${st.resets + 1} · ${plural(st.ballots.length, "Stimmzettel", "Stimmzettel")} · Pool: ${POOL.length} Fragen</p><div class="row-btns">`;
+      if (!showResults()) h += `<button class="btn small" data-act="askReveal">Jetzt auflösen</button>`;
+      h += `<button class="btn small" data-act="askReset">Neue Runde starten</button></div>`;
+    }
+    if (ui.msg && ui.confirm) h += `<p class="msg">${ui.msg}</p>`;
+    h += `</section>`;
+    return h;
+  }
+
+  function viewQuestion() {
+    const total = QUESTIONS.length;
+    if (ui.idx >= total) {
+      return `
+        <div class="qhead"><button class="link" data-act="back">← Letzte Frage</button><span class="eyebrow mono">${total} / ${total}</span></div>
+        <div class="progress"><span style="width:100%"></span></div>
+        <section class="card center">
+          <div class="bigicon">${ICON_CHECK}</div>
+          <p class="title2">Alle ${total} Fragen beantwortet</p>
+          <p class="note">Nach dem Abschicken kannst du nichts mehr ändern.</p>
+          ${ui.msg ? `<p class="msg">${ui.msg}</p>` : ""}
+          <button class="btn primary block" data-act="submit" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Wird gesendet …" : "Stimmen abschicken"}</button>
+          <button class="link" data-act="restartQ">Nochmal von vorn</button>
+        </section>`;
+    }
+    const q = QUESTIONS[ui.idx];
+    const chosen = ui.answers[q.id];
+    return `
+      <div class="qhead"><button class="link" data-act="back">← ${ui.idx === 0 ? "Übersicht" : "Zurück"}</button><span class="eyebrow mono">Frage ${pad(ui.idx + 1)} / ${pad(total)}</span></div>
+      <div class="progress"><span style="width:${(ui.idx / total) * 100}%"></span></div>
+      <section class="qcard"><span class="tag">${q.tag}</span><h2>${q.text}</h2></section>
+      <div class="names" role="group" aria-label="Antwort wählen">${NAMES.map((n) =>
+        `<button class="pick" data-act="answer" data-arg="${n}" aria-pressed="${chosen === n}">${av(n)}<span>${n}</span></button>`).join("")}</div>
+      <p class="hint">Antippen wählt aus und springt zur nächsten Frage. Dich selbst wählen ist erlaubt.</p>`;
+  }
+
+  function viewDone() {
+    const left = Math.max(EXPECTED - st.ballots.length, 0);
+    return `
+      <section class="card center" style="padding:28px 18px">
+        <div class="bigicon">${ICON_CHECK}</div>
+        <p class="title2">Danke fürs Abstimmen!</p>
+        <p class="note">Deine Stimmen sind anonym abgegeben.${left ? ` Es fehlen noch ${plural(left, "Stimme", "Stimmen")}.` : " Damit sind alle durch."}</p>
+        <div class="row-btns" style="width:100%">
+          <button class="btn ${left ? "" : "primary"}" data-act="home">${left ? "Zur Übersicht" : "Zum Ranking"}</button>
+          ${left ? `<button class="btn" data-act="start">Nächste Person auf diesem Handy</button>` : ""}
+        </div>
+      </section>`;
+  }
+
+  // ---------- Auswertung ----------
+  function tally(qid) {
+    const c = {};
+    let n = 0;
+    for (const a of st.ballots) {
+      const v = a[qid];
+      if (typeof v === "string" && NAMES.includes(v)) { c[v] = (c[v] || 0) + 1; n++; }
+    }
+    return { list: Object.entries(c).sort((a, b) => b[1] - a[1] || NAMES.indexOf(a[0]) - NAMES.indexOf(b[0])), n };
+  }
+  // Platzierung mit Gleichstand: 5, 3, 3, 1 Stimmen -> Platz 1, 2, 2, 4
+  function topThree(list) {
+    const out = [];
+    let rank = 0, prev = null;
+    list.forEach(([name, count], i) => {
+      if (count !== prev) { rank = i + 1; prev = count; }
+      if (rank <= 3) out.push({ name, count, rank });
+    });
+    return out;
+  }
+  function rankRows(rows, denom, unit, animate) {
+    const last = rows.length - 1;
+    return `<div class="ranks">${rows.map((r, i) => {
+      const delay = animate ? `style="animation-delay:${(last - i) * 380}ms"` : "";
+      return `<div class="rk ${r.rank === 1 ? "first" : ""} ${animate ? "pop" : ""}" ${delay}>
+        <span class="medal m${r.rank}" aria-label="Platz ${r.rank}">${r.rank}</span>
+        ${av(r.name, r.rank === 1 ? "lg" : "")}
+        <span class="rk-name"><b>${r.name}</b><span class="bar"><span style="width:${denom ? (r.count / denom) * 100 : 0}%"></span></span></span>
+        <span class="votes">${plural(r.count, unit[0], unit[1])}</span>
+      </div>`;
+    }).join("")}</div>`;
+  }
+
+  function viewResults() {
+    let h = `<section class="results" aria-label="Ranking">
+      <div class="results-head"><h2>Das Ranking</h2><button class="btn small" data-act="openAll">Alle aufdecken</button></div>`;
+    if (!st.ballots.length) return h + `<section class="card"><p class="note">Noch keine Stimmen da.</p></section></section>`;
+
+    QUESTIONS.forEach((q, i) => {
+      const { list, n } = tally(q.id);
+      const rows = topThree(list);
+      const isOpen = !!ui.open[q.id];
+      let badge = "";
+      if (isOpen && rows.length) {
+        const firsts = rows.filter((r) => r.rank === 1);
+        if (firsts.length > 1) badge = "Gleichstand";
+        else if (n && firsts[0].count / n >= 0.5) badge = "Eindeutig";
+      }
+      h += `<article class="rcard">
+        <div class="rcard-top"><span class="eyebrow">Frage ${pad(i + 1)} · ${q.tag}</span>${badge ? `<span class="badge">${badge}</span>` : ""}</div>
+        <h3>${q.text}</h3>
+        ${isOpen
+          ? (rows.length ? rankRows(rows, n, ["Stimme", "Stimmen"], ui.anim.has(q.id)) : `<p class="note">Keine Stimmen für diese Frage.</p>`)
+          : `<div class="cover"><button class="btn small primary" data-act="open" data-arg="${q.id}">Aufdecken</button></div>`}
+      </article>`;
+    });
+
+    const totals = {};
+    for (const q of QUESTIONS) for (const [name, c] of tally(q.id).list) totals[name] = (totals[name] || 0) + c;
+    const tList = Object.entries(totals).sort((a, b) => b[1] - a[1] || NAMES.indexOf(a[0]) - NAMES.indexOf(b[0]));
+    const tOpen = !!ui.open.total;
+    h += `<article class="rcard total">
+      <div class="rcard-top"><span class="eyebrow">Gesamtwertung</span></div>
+      <h3>Wer wurde über alle Fragen am häufigsten genannt?</h3>
+      ${tOpen
+        ? rankRows(topThree(tList), tList.length ? tList[0][1] : 0, ["Nennung", "Nennungen"], ui.anim.has("total"))
+        : `<div class="cover"><button class="btn small primary" data-act="open" data-arg="total">Aufdecken</button></div>`}
+    </article></section>`;
+    return h;
+  }
+
+  // ---------- Rendern & Aktionen ----------
+  function render() {
+    app.innerHTML = ui.view === "q" ? viewQuestion() : ui.view === "done" ? viewDone() : viewHome();
+    ui.anim.clear();
+  }
+  function go(view) {
+    ui.view = view;
+    ui.msg = "";
+    render();
+    window.scrollTo({ top: 0 });
+  }
+
+  app.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-act]");
+    if (!el || el.disabled) return;
+    const arg = el.dataset.arg;
+    switch (el.dataset.act) {
+      case "start": ui.answers = {}; ui.idx = 0; ui.ballotId = newId(); go("q"); break;
+      case "home": ui.answers = {}; ui.idx = 0; ui.confirm = null; go("home"); break;
+      case "answer": {
+        if (ui.advancing || !NAMES.includes(arg)) return;
+        ui.answers[QUESTIONS[ui.idx].id] = arg;
+        ui.advancing = true;
+        render();
+        setTimeout(() => { ui.advancing = false; ui.idx = Math.min(ui.idx + 1, QUESTIONS.length); render(); window.scrollTo({ top: 0 }); }, 240);
+        break;
+      }
+      case "back":
+        if (ui.idx > 0) { ui.idx--; ui.msg = ""; render(); } else go("home");
+        break;
+      case "restartQ": ui.idx = 0; ui.msg = ""; render(); break;
+      case "submit": submit(); break;
+      case "open": ui.open[arg] = true; ui.anim.add(arg); render(); break;
+      case "openAll":
+        for (const q of QUESTIONS) if (!ui.open[q.id]) { ui.open[q.id] = true; ui.anim.add(q.id); }
+        if (!ui.open.total) { ui.open.total = true; ui.anim.add("total"); }
+        render();
+        break;
+      case "askReveal": ui.confirm = "reveal"; ui.msg = ""; render(); break;
+      case "askReset": ui.confirm = "reset"; ui.msg = ""; render(); break;
+      case "cancel": ui.confirm = null; ui.msg = ""; render(); break;
+      case "doReveal": hostSend({ k: "reveal", r: st.round }); break;
+      case "doReset": hostSend({ k: "reset", day: st.day, n: st.resets + 1 }, () => { ui.open = {}; }); break;
+      case "retry": st.status = "loading"; render(); load(); break;
+    }
+  });
+
+  // Eine Nachricht in den Kanal schicken. Einfacher POST mit Text, dadurch kein CORS-Preflight nötig.
+  async function send(body) {
+    const res = await fetch(BASE, { method: "POST", body: JSON.stringify(body) });
+    if (!res.ok) { const err = new Error("HTTP " + res.status); err.status = res.status; throw err; }
+    try { if (ingest(await res.json())) derive(); } catch (e) {}
+  }
+  const sendError = (e) => e && e.status === 429
+    ? "Gerade kommen zu viele Anfragen an. Warte kurz und versuch es nochmal."
+    : "Senden hat nicht geklappt. Prüf das Internet und tipp nochmal.";
+
+  async function submit() {
+    if (ui.busy) return;
+    if (QUESTIONS.some((q) => !ui.answers[q.id])) { ui.msg = "Es fehlt noch eine Antwort."; render(); return; }
+    ui.busy = true; ui.msg = ""; render();
+    try {
+      const a = {};
+      for (const q of QUESTIONS) a[q.id] = ui.answers[q.id];
+      // Zufällige Stimmzettel-ID, kein Name. Beim erneuten Senden bleibt die ID gleich, so zählt nichts doppelt.
+      await send({ k: "b", r: st.round, id: ui.ballotId, a });
+      bumpDevice();
+      ui.busy = false; ui.answers = {};
+      go("done");
+      return;
+    } catch (e) { ui.msg = sendError(e); }
+    ui.busy = false; render();
+  }
+
+  async function hostSend(body, after) {
+    if (ui.busy) return;
+    ui.busy = true; render();
+    try { await send(body); if (after) after(); ui.confirm = null; ui.msg = ""; }
+    catch (e) { ui.msg = sendError(e); }
+    ui.busy = false; render();
+  }
+
+  // ---------- Daten laden und live mitlesen ----------
+  let source = null, pollTimer = null;
+
+  async function fetchBacklog() {
+    const res = await fetch(BASE + "/json?poll=1&since=all", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    let lastId = null, changed = false;
+    for (const line of text.split("\n")) {
+      if (!line.trim()) continue;
+      try { const ev = JSON.parse(line); if (ingest(ev)) changed = true; if (ev.id) lastId = ev.id; } catch (e) {}
+    }
+    if (changed) derive();
+    return lastId;
+  }
+
+  async function load() {
+    st.slow = false;
+    const timer = setTimeout(() => { st.slow = true; render(); }, 10000);
+    try {
+      if (!POOL.length) {
+        const res = await fetch("questions.json", { cache: "no-cache" });
+        if (!res.ok) throw new Error("questions.json: HTTP " + res.status);
+        POOL = (await res.json()).filter((p) => p && typeof p.q === "string");
+        QUESTIONS = questionsFor(st.day, POOL);
+      }
+      // ntfy.sh vergisst nach ~12 Stunden. Die GitHub Action sichert alle 3 Stunden
+      // alles ins Repo (votes-archive.json); das lesen wir zusätzlich ein.
+      try {
+        const res = await fetch(ARCHIVE_URL + "?t=" + Math.floor(Date.now() / 300000), { cache: "no-cache" });
+        if (res.ok) for (const ev of await res.json()) ingest(ev);
+      } catch (e) { /* Archiv fehlt noch oder ist nicht erreichbar: dann nur live */ }
+      const lastId = await fetchBacklog();
+      derive();
+      st.status = "ready";
+      live(lastId);
+    } catch (e) {
+      st.status = "error";
+    }
+    clearTimeout(timer);
+    st.slow = false;
+    render();
+  }
+
+  function live(since) {
+    if (source) return;
+    if (typeof EventSource === "function") {
+      source = new EventSource(BASE + "/sse?since=" + (since || "all"));
+      source.onmessage = (e) => {
+        try { if (ingest(JSON.parse(e.data))) { derive(); render(); } } catch (err) {}
+      };
+      // Bei Verbindungsabbruch verbindet sich der Browser selbst neu; doppelte Nachrichten filtert ingest().
+    } else if (!pollTimer) {
+      pollTimer = setInterval(() => { fetchBacklog().then(render).catch(() => {}); }, 20000);
+    }
+  }
+
+  // Handy war im Standby: einmal nachladen, falls Live-Nachrichten verpasst wurden
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && st.status === "ready") fetchBacklog().then(render).catch(() => {});
+  });
+  window.addEventListener("hashchange", render);
+
+  // Sonntag 22 Uhr auf die neue Woche umschalten (nicht mitten in einer Abstimmung)
+  setInterval(() => {
+    const today = berlinDay();
+    if (today === st.day || !POOL.length || ui.view === "q") return;
+    st.day = today;
+    QUESTIONS = questionsFor(today, POOL);
+    ui.open = {};
+    derive();
+    if (ui.view === "done") ui.view = "home";
+    render();
+  }, 60000);
+
+  render();
+  load();
+})();
+</script>
+</body>
+</html>

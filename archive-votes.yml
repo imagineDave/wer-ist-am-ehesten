@@ -1,0 +1,41 @@
+# Sichert die Stimmen aus ntfy.sh ins Repo.
+# Grund: ntfy.sh hebt Nachrichten nur ~12 Stunden auf, eine Runde läuft aber eine Woche.
+# Läuft alle 3 Stunden (GitHub startet geplante Jobs teils etwas verspätet, daher der Puffer).
+name: Stimmen sichern
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # alle 3 Stunden, Minute 17 (UTC)
+  workflow_dispatch:          # zusätzlich per Knopf unter "Actions" startbar
+
+permissions:
+  contents: write             # darf votes-archive.json committen
+
+concurrency:
+  group: archive-votes
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Neue Nachrichten von ntfy.sh holen und zusammenführen
+        run: node scripts/archive-votes.mjs
+
+      - name: Committen, falls sich etwas geändert hat
+        run: |
+          if git diff --quiet -- votes-archive.json; then
+            echo "Keine neuen Stimmen."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add votes-archive.json
+          git commit -m "Stimmen gesichert"
+          git push
