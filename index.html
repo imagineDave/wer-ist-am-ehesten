@@ -254,6 +254,11 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   // Einreichen dran, die übrigen Plätze füllen die Fragen aus dem Pool (siehe shared.js).
   let QUESTIONS = [];
   let SUBMISSIONS = [];
+  // Bis einschließlich dieser Woche (bis So, 8.11.2026, 22 Uhr) gilt noch der alte Pool mit 16 Fragen
+  // aus questions-legacy.json. Sonst würden sich die Fragen der laufenden Abstimmung ändern.
+  // Kann nach dieser Woche samt questions-legacy.json gelöscht werden.
+  const LEGACY_UNTIL = 2966;
+  let LEGACY_POOL = [];
   function rng(seed) { // mulberry32: kleiner Zufallsgenerator, der aus demselben Startwert immer dieselben Zahlen macht
     return () => {
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -316,7 +321,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     const mine = (WIAE.schedule(SUBMISSIONS, n).byWeek.get(n) || [])
       .map((s) => ({ id: s.id, tag: esc(WIAE.USER_TAG), text: esc(s.text), raw: s.text }));
     const taken = new Set(mine.map((q) => normalize(q.raw)));
-    const fill = questionsFor(day, POOL).filter((q) => !taken.has(normalize(q.raw)));
+    const fill = questionsFor(day, dayNumber(day) <= LEGACY_UNTIL ? LEGACY_POOL : POOL).filter((q) => !taken.has(normalize(q.raw)));
     return mine.concat(fill).slice(0, PER_DAY).map(({ raw, ...q }) => q);
   }
 
@@ -680,6 +685,11 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         const res = await fetch("questions.json", { cache: "no-cache" });
         if (!res.ok) throw new Error("questions.json: HTTP " + res.status);
         POOL = (await res.json()).filter((p) => p && typeof p.q === "string");
+      }
+      if (dayNumber(st.day) <= LEGACY_UNTIL && !LEGACY_POOL.length) {
+        const res = await fetch("questions-legacy.json", { cache: "no-cache" });
+        if (!res.ok) throw new Error("questions-legacy.json: HTTP " + res.status);
+        LEGACY_POOL = (await res.json()).filter((p) => p && typeof p.q === "string");
       }
       // Eingereichte Fragen jedes Mal frisch laden: Fehlt hier etwas, würde dieses Handy andere Fragen zeigen
       SUBMISSIONS = await WIAE.loadSubmissions();
