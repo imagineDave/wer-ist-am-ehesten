@@ -192,6 +192,8 @@ a.btn { text-decoration: none; }
 .rk { display: grid; grid-template-columns: 32px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
 .medal { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-family: var(--f-mono); font-weight: 700; color: var(--on-medal); border: 2px solid var(--border); }
 .m1 { background: var(--gold); } .m2 { background: var(--silver); } .m3 { background: var(--bronze); }
+.mx { background: var(--track); color: var(--ink); }
+.rsum { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; border-top: 1px dashed var(--track); padding-top: 10px; }
 .rk-name { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .rk-name b { font-size: 16px; }
 .rk.first b { font-size: 20px; }
@@ -332,7 +334,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   const isHost = () => location.hash === "#leitung";
 
   // Was dieses Gerät gerade tut
-  const ui = { view: "home", answers: {}, idx: 0, ballotId: null, open: {}, anim: new Set(), confirm: null, busy: false, msg: "", advancing: false };
+  const ui = { view: "home", answers: {}, idx: 0, ballotId: null, open: {}, all: {}, anim: new Set(), confirm: null, busy: false, msg: "", advancing: false };
   // Gemeinsamer Stand, abgeleitet aus allen Nachrichten im Kanal
   const st = { status: "loading", slow: false, day: berlinDay(), round: "", ballots: [], revealed: false };
   let POOL = [];
@@ -502,21 +504,27 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     return { list: Object.entries(c).sort((a, b) => b[1] - a[1] || NAMES.indexOf(a[0]) - NAMES.indexOf(b[0])), n };
   }
   // Platzierung mit Gleichstand: 5, 3, 3, 1 Stimmen -> Platz 1, 2, 2, 4
-  function topThree(list) {
-    const out = [];
+  function ranked(list) {
     let rank = 0, prev = null;
-    list.forEach(([name, count], i) => {
+    return list.map(([name, count], i) => {
       if (count !== prev) { rank = i + 1; prev = count; }
-      if (rank <= 3) out.push({ name, count, rank });
+      return { name, count, rank };
     });
-    return out;
+  }
+  const topThree = (list) => ranked(list).filter((r) => r.rank <= 3);
+  // Unter jedem Ranking: alle Stimmen zählen, auch die für Platz 4 und dahinter
+  function rankSummary(key, all, shown, total, unit) {
+    const rest = total - shown.reduce((s, r) => s + r.count, 0);
+    const more = all.length > shown.length;
+    return `<div class="rsum"><p class="note">${plural(total, unit[0], unit[1])} insgesamt${rest > 0 ? `, davon ${rest} für weitere Personen` : ""}</p>
+      ${more || ui.all[key] ? `<button class="link" data-act="toggleAll" data-arg="${key}">${ui.all[key] ? "Weniger anzeigen" : `Alle ${all.length} anzeigen`}</button>` : ""}</div>`;
   }
   function rankRows(rows, denom, unit, animate) {
     const last = rows.length - 1;
     return `<div class="ranks">${rows.map((r, i) => {
       const delay = animate ? `style="animation-delay:${(last - i) * 380}ms"` : "";
       return `<div class="rk ${r.rank === 1 ? "first" : ""} ${animate ? "pop" : ""}" ${delay}>
-        <span class="medal m${r.rank}" aria-label="Platz ${r.rank}">${r.rank}</span>
+        <span class="medal ${r.rank <= 3 ? "m" + r.rank : "mx"}" aria-label="Platz ${r.rank}">${r.rank}</span>
         ${av(r.name, r.rank === 1 ? "lg" : "")}
         <span class="rk-name"><b>${r.name}</b><span class="bar"><span style="width:${denom ? (r.count / denom) * 100 : 0}%"></span></span></span>
         <span class="votes">${plural(r.count, unit[0], unit[1])}</span>
@@ -531,7 +539,8 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
 
     QUESTIONS.forEach((q, i) => {
       const { list, n } = tally(q.id);
-      const rows = topThree(list);
+      const all = ranked(list), top = topThree(list);
+      const rows = ui.all[q.id] ? all : top;
       const isOpen = !!ui.open[q.id];
       let badge = "";
       if (isOpen && rows.length) {
@@ -543,7 +552,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         <div class="rcard-top"><span class="eyebrow">Frage ${pad(i + 1)} · ${q.tag}</span>${badge ? `<span class="badge">${badge}</span>` : ""}</div>
         <h3>${q.text}</h3>
         ${isOpen
-          ? (rows.length ? rankRows(rows, n, ["Stimme", "Stimmen"], ui.anim.has(q.id)) : `<p class="note">Keine Stimmen für diese Frage.</p>`)
+          ? (rows.length ? rankRows(rows, n, ["Stimme", "Stimmen"], ui.anim.has(q.id)) + rankSummary(q.id, all, top, n, ["Stimme", "Stimmen"]) : `<p class="note">Keine Stimmen für diese Frage.</p>`)
           : `<div class="cover"><button class="btn small primary" data-act="open" data-arg="${q.id}">Aufdecken</button></div>`}
       </article>`;
     });
@@ -552,11 +561,13 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     for (const q of QUESTIONS) for (const [name, c] of tally(q.id).list) totals[name] = (totals[name] || 0) + c;
     const tList = Object.entries(totals).sort((a, b) => b[1] - a[1] || NAMES.indexOf(a[0]) - NAMES.indexOf(b[0]));
     const tOpen = !!ui.open.total;
+    const tAll = ranked(tList), tTop = topThree(tList);
+    const tSum = tList.reduce((s, [, c]) => s + c, 0);
     h += `<article class="rcard total">
       <div class="rcard-top"><span class="eyebrow">Gesamtwertung</span></div>
       <h3>Wer wurde über alle Fragen am häufigsten genannt?</h3>
       ${tOpen
-        ? rankRows(topThree(tList), tList.length ? tList[0][1] : 0, ["Nennung", "Nennungen"], ui.anim.has("total"))
+        ? rankRows(ui.all.total ? tAll : tTop, tList.length ? tList[0][1] : 0, ["Nennung", "Nennungen"], ui.anim.has("total")) + rankSummary("total", tAll, tTop, tSum, ["Nennung", "Nennungen"])
         : `<div class="cover"><button class="btn small primary" data-act="open" data-arg="total">Aufdecken</button></div>`}
     </article></section>`;
     return h;
@@ -594,6 +605,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         break;
       case "restartQ": ui.idx = 0; ui.msg = ""; render(); break;
       case "submit": submit(); break;
+      case "toggleAll": ui.all[arg] = !ui.all[arg]; render(); break;
       case "open": ui.open[arg] = true; ui.anim.add(arg); render(); break;
       case "openAll":
         for (const q of QUESTIONS) if (!ui.open[q.id]) { ui.open[q.id] = true; ui.anim.add(q.id); }
@@ -604,7 +616,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
       case "askReset": ui.confirm = "reset"; ui.msg = ""; render(); break;
       case "cancel": ui.confirm = null; ui.msg = ""; render(); break;
       case "doReveal": hostSend({ k: "reveal", r: st.round }); break;
-      case "doReset": hostSend({ k: "reset", day: st.day, n: st.resets + 1 }, () => { ui.open = {}; }); break;
+      case "doReset": hostSend({ k: "reset", day: st.day, n: st.resets + 1 }, () => { ui.open = {}; ui.all = {}; }); break;
       case "retry": st.status = "loading"; render(); load(); break;
     }
   });
@@ -726,7 +738,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     if (ui.view === "q") return;
     st.day = today;
     QUESTIONS = weekQuestions(today);
-    ui.open = {};
+    ui.open = {}; ui.all = {};
     derive();
     if (ui.view === "done") ui.view = "home";
     render();
