@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frage einreichen · Wer ist am ehesten?</title>
+<meta name="description" content="Reich eine eigene „Wer ist am ehesten …?“-Frage ein. Sie kommt in einer der nächsten Wochen dran.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Gleiche Optik wie die Abstimmung (index.html) */
+:root {
+  --bg: #EEF0FF; --dot: #D5D9F6; --surface: #FFFFFF; --ink: #16173D; --muted: #565A88;
+  --border: #16173D; --shadow-c: #16173D; --accent: #D81B60; --accent-ink: #FFFFFF;
+  --gold: #FFC93C; --on-medal: #16173D; --track: #E1E4FA; --hl: #FFC93C; --focus: #3D5AFE;
+  --f-display: "Dela Gothic One", "Arial Black", Impact, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101130; --dot: #1E2050; --surface: #1B1C45; --ink: #F0F1FF; --muted: #A6A9D8;
+    --border: #C9CCF5; --shadow-c: #6C70E8; --accent: #FF5C93; --accent-ink: #1A0710;
+    --track: #2A2C60; --hl: #B8285E; --focus: #8EA0FF;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.4px);
+  background-size: 20px 20px;
+  color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wrap {
+  max-width: 560px; margin: 0 auto; padding-block: 22px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.hero { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.hero h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(2.1rem, 9.5vw, 3.1rem); line-height: 1.04; letter-spacing: -.01em; }
+.hl { background: linear-gradient(transparent 58%, var(--hl) 58%, var(--hl) 92%, transparent 92%); padding: 0 .06em; }
+.lede { font-size: 17px; color: var(--muted); max-width: 46ch; }
+.card { background: var(--surface); border: 2px solid var(--border); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.card h2 { font-size: 18px; font-weight: 800; }
+.note { font-size: 15px; color: var(--muted); }
+.msg { font-weight: 700; color: var(--accent); }
+.ok { font-weight: 700; }
+.btn {
+  font: inherit; font-weight: 800; font-size: 17px; border: 2px solid var(--border); border-radius: 14px;
+  padding: 13px 18px; min-height: 52px; background: var(--surface); color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow-c); display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  cursor: pointer; transition: transform .08s ease, box-shadow .08s ease; text-align: center; text-decoration: none;
+}
+.btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--shadow-c); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.small { font-size: 15px; min-height: 42px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--shadow-c); }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.back { font-weight: 700; color: var(--ink); text-underline-offset: 3px; align-self: flex-start; padding: 6px 0; }
+
+.qcard {
+  background: var(--gold); color: var(--on-medal); border: 2px solid var(--border); border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--shadow-c); padding: 18px 18px 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.qcard label { font-family: var(--f-mono); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+textarea {
+  font-family: var(--f-display); font-weight: 400; font-size: clamp(1.25rem, 5.4vw, 1.6rem); line-height: 1.2;
+  width: 100%; min-height: 5.2em; resize: vertical; padding: 0; border: 0; background: transparent; color: inherit;
+}
+textarea::placeholder { color: inherit; opacity: .45; }
+textarea:focus { outline: none; }
+.qcard:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.counter { font-family: var(--f-mono); font-size: 13px; font-weight: 700; text-align: right; opacity: .75; }
+.counter.over { color: #8B0030; opacity: 1; }
+
+.stat { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.count { font-family: var(--f-display); font-size: 40px; line-height: 1; }
+.list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.list li { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-top: 1px dashed var(--track); }
+.list li:first-child { border-top: 0; padding-top: 0; }
+.list b { font-weight: 700; }
+.when { font-family: var(--f-mono); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--muted); }
+.when.done { color: var(--accent); }
+.host { border-style: dashed; }
+.host .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+.loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 600; }
+.spin { width: 18px; height: 18px; border: 3px solid var(--track); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<noscript><p style="padding:16px">Bitte JavaScript aktivieren, sonst klappt das Einreichen nicht.</p></noscript>
+<script src="../shared.js"></script>
+<script>
+(() => {
+  "use strict";
+  const { esc, normalize, cleanText, dateLabel, weekKey, dayNumber, berlinDay, MIN_LEN, MAX_LEN, SWITCH_HOUR } = WIAE;
+  const MINE_KEY = "wiae:meine-fragen";
+  const ICON_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+  const st = { status: "loading", events: [], pool: [], draft: "", busy: false, msg: "", ok: "", confirm: null };
+  const app = document.getElementById("app");
+  const isHost = () => location.hash === "#leitung";
+
+  const mine = () => { try { return JSON.parse(localStorage.getItem(MINE_KEY)) || []; } catch (e) { return []; } };
+  const addMine = (id) => { try { localStorage.setItem(MINE_KEY, JSON.stringify([...mine(), id].slice(-50))); } catch (e) {} };
+
+  const nowWeek = () => dayNumber(berlinDay());
+  const weekText = (w) => `Woche bis ${dateLabel(weekKey(w))}`;
+
+  function plan() { return WIAE.project(st.events, nowWeek()); }
+
+  function render() {
+    const cur = nowWeek();
+    let h = `<a class="back" href="../">← Zur Abstimmung</a>
+      <header class="hero">
+        <p class="eyebrow">Fragen von euch</p>
+        <h1>Frage <span class="hl">einreichen</span></h1>
+        <p class="lede">Deine Frage kommt in die Warteschlange und ist vor den Standardfragen dran, meist schon in der nächsten Woche. Anonym, ohne Namen.</p>
+      </header>`;
+
+    if (st.status === "loading") {
+      return app.innerHTML = h + `<section class="card"><div class="loading"><span class="spin" aria-hidden="true"></span>Warteschlange wird geladen …</div></section>`;
+    }
+    if (st.status === "error") {
+      return app.innerHTML = h + `<section class="card"><p><b>Die Warteschlange ist gerade nicht erreichbar.</b></p>
+        <p class="note">Prüf deine Internetverbindung und versuch es nochmal.</p>
+        <button class="btn small" data-act="retry">Nochmal laden</button></section>`;
+    }
+
+    const { subs } = plan();
+    const len = cleanText(st.draft).length;
+    h += `<form class="card" data-form novalidate>
+      <div class="qcard">
+        <label for="q">Deine Frage</label>
+        <textarea id="q" maxlength="${MAX_LEN + 20}" placeholder="Wer hat als Erstes ein eigenes Haustier im Büro?" ${st.busy ? "disabled" : ""}>${esc(st.draft)}</textarea>
+        <span class="counter ${len > MAX_LEN ? "over" : ""}" id="counter">${len} / ${MAX_LEN}</span>
+      </div>
+      <p class="note">Tipp: Fang mit „Wer …“ an, damit man eine Person aus der Gruppe wählen kann. Bitte nett bleiben, die Spielleitung kann Fragen wieder rausnehmen.</p>
+      ${st.msg ? `<p class="msg" role="alert">${st.msg}</p>` : ""}
+      ${st.ok ? `<p class="ok" role="status">${st.ok}</p>` : ""}
+      <button class="btn primary block" type="submit" ${st.busy ? "disabled" : ""}>${st.busy ? "Wird gesendet …" : `Frage einreichen ${ICON_ARROW}`}</button>
+    </form>`;
+
+    // Überblick: wie viele warten noch
+    const waiting = subs.filter((s) => !s.deleted && s.week > cur);
+    const next = waiting.filter((s) => s.week === cur + 1).length;
+    h += `<section class="card" aria-label="Warteschlange">
+      <div class="stat"><span class="count">${waiting.length}</span><b>${waiting.length === 1 ? "Frage wartet" : "Fragen warten"}</b></div>
+      <p class="note">${waiting.length
+        ? `In der ${weekText(cur + 1)} ${next === 1 ? "kommt 1" : `kommen ${next}`} davon dran${next < WIAE.PER_WEEK ? `, die restlichen ${WIAE.PER_WEEK - next} Plätze füllen die Standardfragen` : ""}.`
+        : `Gerade wartet nichts. Nächste Woche gibt es nur Standardfragen, außer du reichst jetzt etwas ein.`}
+        Was du nach Sonntag ${SWITCH_HOUR} Uhr einreichst, ist frühestens in der Woche danach dran.</p>
+    </section>`;
+
+    // Eigene Fragen von diesem Handy
+    const ids = new Set(mine());
+    const own = subs.filter((s) => ids.has(s.id)).reverse();
+    if (own.length) {
+      h += `<section class="card" aria-label="Deine Fragen"><h2>Von diesem Handy eingereicht</h2><ul class="list">${own.map((s) => `<li><b>${esc(s.text)}</b>${status(s, cur)}</li>`).join("")}</ul></section>`;
+    }
+
+    if (isHost()) h += hostPanel(subs, cur);
+    h += `<footer>Fragen laufen wie die Stimmen über ntfy.sh und werden alle paar Stunden im GitHub-Repo gesichert.</footer>`;
+
+    const had = document.activeElement && document.activeElement.id === "q";
+    const pos = had ? document.activeElement.selectionStart : null;
+    app.innerHTML = h;
+    if (had) { const t = document.getElementById("q"); t.focus(); t.setSelectionRange(pos, pos); }
+  }
+
+  function status(s, cur) {
+    if (s.deleted && (s.week === undefined || s.week > cur)) return `<span class="when">Von der Spielleitung entfernt</span>`;
+    if (s.week === undefined) return `<span class="when">In der Warteschlange</span>`;
+    if (s.week < cur) return `<span class="when done">War dran: ${weekText(s.week)}</span>`;
+    if (s.week === cur) return `<span class="when done">Ist diese Woche dran!</span>`;
+    return `<span class="when">Kommt dran: ${weekText(s.week)}</span>`;
+  }
+
+  function hostPanel(subs, cur) {
+    const open = subs.filter((s) => !s.deleted && (s.week === undefined || s.week > cur));
+    let h = `<section class="card host" aria-label="Spielleitung"><div><h2>Spielleitung: Warteschlange</h2>
+      <p class="note">Nur mit #leitung sichtbar. Entfernen geht nur bei Fragen, deren Woche noch nicht läuft.</p></div>`;
+    if (!open.length) return h + `<p class="note">Keine Fragen in der Warteschlange.</p></section>`;
+    h += `<ul class="list">${open.map((s) => `<li><div class="row"><div><b>${esc(s.text)}</b><br><span class="when">${s.week !== undefined ? weekText(s.week) : "wartet"}</span></div>
+      ${st.confirm === s.id
+        ? `<button class="btn small primary" data-act="del" data-arg="${esc(s.id)}" ${st.busy ? "disabled" : ""}>Wirklich?</button>`
+        : `<button class="btn small" data-act="askDel" data-arg="${esc(s.id)}">Entfernen</button>`}
+      </div></li>`).join("")}</ul></section>`;
+    return h;
+  }
+
+  function validate(text) {
+    if (text.length < MIN_LEN) return "Die Frage ist zu kurz.";
+    if (text.length > MAX_LEN) return `Bitte höchstens ${MAX_LEN} Zeichen.`;
+    const n = normalize(text);
+    if (st.pool.some((p) => normalize(p.q) === n)) return "Diese Frage gibt es schon bei den Standardfragen.";
+    const { subs } = plan();
+    if (subs.some((s) => !s.deleted && normalize(s.text) === n)) return "Diese Frage wurde schon eingereicht.";
+    return "";
+  }
+
+  async function submit() {
+    if (st.busy) return;
+    let text = cleanText(st.draft);
+    if (text && !/[?？!]$/.test(text)) text += "?";
+    const err = validate(text);
+    st.ok = "";
+    if (err) { st.msg = err; render(); return; }
+    st.busy = true; st.msg = ""; render();
+    try {
+      const ev = await WIAE.submitQuestion(text);
+      if (ev) { st.events.push(ev); addMine(ev.id); }
+      const s = ev && plan().subs.find((x) => x.id === ev.id);
+      st.draft = "";
+      st.ok = s && s.week !== undefined ? `Danke! Deine Frage ist voraussichtlich in der ${weekText(s.week)} dran.` : "Danke! Deine Frage ist in der Warteschlange.";
+    } catch (e) {
+      st.msg = e && e.status === 429 ? "Gerade kommen zu viele Anfragen an. Warte kurz und versuch es nochmal." : "Senden hat nicht geklappt. Prüf das Internet und versuch es nochmal.";
+    }
+    st.busy = false; render();
+  }
+
+  async function del(id) {
+    if (st.busy) return;
+    st.busy = true; render();
+    try { const ev = await WIAE.deleteQuestion(id); if (ev) st.events.push(ev); st.confirm = null; }
+    catch (e) { st.msg = "Entfernen hat nicht geklappt. Versuch es nochmal."; }
+    st.busy = false; render();
+  }
+
+  app.addEventListener("input", (e) => {
+    if (e.target.id !== "q") return;
+    st.draft = e.target.value;
+    const len = cleanText(st.draft).length, c = document.getElementById("counter");
+    c.textContent = `${len} / ${MAX_LEN}`;
+    c.classList.toggle("over", len > MAX_LEN);
+  });
+  app.addEventListener("submit", (e) => { e.preventDefault(); submit(); });
+  app.addEventListener("keydown", (e) => {
+    if (e.target.id === "q" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+  });
+  app.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-act]");
+    if (!el || el.disabled) return;
+    const arg = el.dataset.arg;
+    if (el.dataset.act === "retry") { st.status = "loading"; render(); load(); }
+    if (el.dataset.act === "askDel") { st.confirm = arg; render(); }
+    if (el.dataset.act === "del") del(arg);
+  });
+  window.addEventListener("hashchange", render);
+
+  async function load() {
+    try {
+      const [events, pool] = await Promise.all([
+        WIAE.loadSubmissions("../"),
+        fetch("../questions.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : [])).catch(() => [])
+      ]);
+      st.events = events;
+      st.pool = Array.isArray(pool) ? pool.filter((p) => p && typeof p.q === "string") : [];
+      st.status = "ready";
+    } catch (e) {
+      st.status = "error";
+    }
+    render();
+  }
+
+  render();
+  load();
+})();
+</script>
+</body>
+</html>

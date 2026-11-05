@@ -1,0 +1,42 @@
+# Sichert die eingereichten Fragen (Seite /fragen/) aus ntfy.sh ins Repo.
+# Grund: ntfy.sh hebt Nachrichten nur ~12 Stunden auf, die Fragen sollen aber in der Warteschlange bleiben,
+# bis sie dran sind. Läuft alle 3 Stunden, damit garantiert nichts verloren geht.
+name: Fragen sichern
+
+on:
+  schedule:
+    - cron: "47 */3 * * *"   # alle 3 Stunden, Minute 47 (UTC), versetzt zur Stimmen-Sicherung
+  workflow_dispatch:          # zusätzlich per Knopf unter "Actions" startbar
+
+permissions:
+  contents: write             # darf submitted-questions.json committen
+
+concurrency:
+  group: archive-questions
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Neue Fragen von ntfy.sh holen und zusammenführen
+        run: node scripts/archive-questions.mjs
+
+      - name: Committen, falls sich etwas geändert hat
+        run: |
+          if git diff --quiet -- submitted-questions.json; then
+            echo "Keine neuen Fragen."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add submitted-questions.json
+          git commit -m "Eingereichte Fragen gesichert"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
