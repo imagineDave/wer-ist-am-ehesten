@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wer ist am ehesten?</title>
-<meta name="description" content="Anonymes Ranking für die Pause: 16 Fragen, 11 Leute, am Ende Platz 1 bis 3.">
+<meta name="description" content="Anonymes Ranking für die Pause: 16 Fragen, 11 Leute, am Ende das komplette Ranking.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -342,7 +342,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   const isHost = () => location.hash === "#leitung";
 
   // Was dieses Gerät gerade tut
-  const ui = { view: "home", answers: {}, idx: 0, ballotId: null, open: {}, all: {}, anim: new Set(), confirm: null, busy: false, msg: "", advancing: false };
+  const ui = { view: "home", answers: {}, idx: 0, ballotId: null, open: {}, anim: new Set(), confirm: null, busy: false, msg: "", advancing: false };
   // Gemeinsamer Stand, abgeleitet aus allen Nachrichten im Kanal
   const st = { status: "loading", slow: false, day: berlinDay(), round: "", ballots: [], revealed: false };
   let POOL = [];
@@ -395,7 +395,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         <div class="hero-top"><p class="eyebrow">Diese Woche · bis ${dateLabel(st.day)}, ${SWITCH_HOUR} Uhr</p>
           <a class="btn tiny" href="fragen/">+ Frage einreichen</a></div>
         <h1>Wer ist am <span class="hl">ehesten</span> …?</h1>
-        <p class="lede">Jede Woche ${PER_DAY} neue Fragen über euch elf. Niemand sieht, wen du gewählt hast. Sobald alle ${EXPECTED} abgestimmt haben, zeigt die Seite für jede Frage Platz 1 bis 3.</p>
+        <p class="lede">Jede Woche ${PER_DAY} neue Fragen über euch elf. Niemand sieht, wen du gewählt hast. Sobald alle ${EXPECTED} abgestimmt haben, zeigt die Seite für jede Frage das komplette Ranking.</p>
       </header>`;
 
     h += `<section class="card" aria-label="Abstimmungsstand">`;
@@ -520,14 +520,8 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
       return { name, count, rank };
     });
   }
-  const topThree = (list) => ranked(list).filter((r) => r.rank <= 3);
-  // Unter jedem Ranking: alle Stimmen zählen, auch die für Platz 4 und dahinter
-  function rankSummary(key, all, shown, total, unit) {
-    const rest = ui.all[key] ? 0 : total - shown.reduce((s, r) => s + r.count, 0);
-    const more = all.length > shown.length;
-    return `<div class="rsum"><p class="note">${plural(total, unit[0], unit[1])} insgesamt${rest > 0 ? `, davon ${rest} für weitere Personen` : ""}</p>
-      ${more || ui.all[key] ? `<button class="link" data-act="toggleAll" data-arg="${key}">${ui.all[key] ? "Weniger anzeigen" : `Alle ${all.length} anzeigen`}</button>` : ""}</div>`;
-  }
+  // Unter jedem Ranking: Summe aller Stimmen, damit man sieht, dass alle gezählt sind
+  const rankSummary = (total, unit) => `<div class="rsum"><p class="note">${plural(total, unit[0], unit[1])} insgesamt</p></div>`;
   function rankRows(rows, denom, unit, animate) {
     const last = rows.length - 1;
     return `<div class="ranks">${rows.map((r, i) => {
@@ -548,8 +542,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
 
     QUESTIONS.forEach((q, i) => {
       const { list, n } = tally(q.id);
-      const all = ranked(list), top = topThree(list);
-      const rows = ui.all[q.id] ? all : top;
+      const rows = ranked(list); // immer alle Personen mit Stimmen
       const isOpen = !!ui.open[q.id];
       let badge = "";
       if (isOpen && rows.length) {
@@ -561,7 +554,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         <div class="rcard-top"><span class="eyebrow">Frage ${pad(i + 1)} · ${q.tag}</span>${badge ? `<span class="badge">${badge}</span>` : ""}</div>
         <h3>${q.text}</h3>
         ${isOpen
-          ? (rows.length ? rankRows(rows, n, ["Stimme", "Stimmen"], ui.anim.has(q.id)) + rankSummary(q.id, all, top, n, ["Stimme", "Stimmen"]) : `<p class="note">Keine Stimmen für diese Frage.</p>`)
+          ? (rows.length ? rankRows(rows, n, ["Stimme", "Stimmen"], ui.anim.has(q.id)) + rankSummary(n, ["Stimme", "Stimmen"]) : `<p class="note">Keine Stimmen für diese Frage.</p>`)
           : `<div class="cover"><button class="btn small primary" data-act="open" data-arg="${q.id}">Aufdecken</button></div>`}
       </article>`;
     });
@@ -570,13 +563,12 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     for (const q of QUESTIONS) for (const [name, c] of tally(q.id).list) totals[name] = (totals[name] || 0) + c;
     const tList = Object.entries(totals).sort((a, b) => b[1] - a[1] || NAMES.indexOf(a[0]) - NAMES.indexOf(b[0]));
     const tOpen = !!ui.open.total;
-    const tAll = ranked(tList), tTop = topThree(tList);
     const tSum = tList.reduce((s, [, c]) => s + c, 0);
     h += `<article class="rcard total">
       <div class="rcard-top"><span class="eyebrow">Gesamtwertung</span></div>
       <h3>Wer wurde über alle Fragen am häufigsten genannt?</h3>
       ${tOpen
-        ? rankRows(ui.all.total ? tAll : tTop, tList.length ? tList[0][1] : 0, ["Nennung", "Nennungen"], ui.anim.has("total")) + rankSummary("total", tAll, tTop, tSum, ["Nennung", "Nennungen"])
+        ? rankRows(ranked(tList), tList.length ? tList[0][1] : 0, ["Nennung", "Nennungen"], ui.anim.has("total")) + rankSummary(tSum, ["Nennung", "Nennungen"])
         : `<div class="cover"><button class="btn small primary" data-act="open" data-arg="total">Aufdecken</button></div>`}
     </article></section>`;
     return h;
@@ -614,7 +606,6 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         break;
       case "restartQ": ui.idx = 0; ui.msg = ""; render(); break;
       case "submit": submit(); break;
-      case "toggleAll": ui.all[arg] = !ui.all[arg]; render(); break;
       case "open": ui.open[arg] = true; ui.anim.add(arg); render(); break;
       case "openAll":
         for (const q of QUESTIONS) if (!ui.open[q.id]) { ui.open[q.id] = true; ui.anim.add(q.id); }
@@ -625,7 +616,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
       case "askReset": ui.confirm = "reset"; ui.msg = ""; render(); break;
       case "cancel": ui.confirm = null; ui.msg = ""; render(); break;
       case "doReveal": hostSend({ k: "reveal", r: st.round }); break;
-      case "doReset": hostSend({ k: "reset", day: st.day, n: st.resets + 1 }, () => { ui.open = {}; ui.all = {}; }); break;
+      case "doReset": hostSend({ k: "reset", day: st.day, n: st.resets + 1 }, () => { ui.open = {}; }); break;
       case "retry": st.status = "loading"; render(); load(); break;
     }
   });
@@ -747,7 +738,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     if (ui.view === "q") return;
     st.day = today;
     QUESTIONS = weekQuestions(today);
-    ui.open = {}; ui.all = {};
+    ui.open = {};
     derive();
     if (ui.view === "done") ui.view = "home";
     render();
