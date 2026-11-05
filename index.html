@@ -333,6 +333,8 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   const hue = (n) => HUES[NAMES.indexOf(n)] ?? 220;
   const av = (n, cls = "") => `<span class="av ${cls}" style="--h:${hue(n)}" aria-hidden="true">${n[0]}</span>`;
   const plural = (c, one, many) => `${c} ${c === 1 ? one : many}`;
+  // "Es fehlt noch eine Stimme." / "Es fehlen noch 3 Stimmen."
+  const missing = (c) => c === 1 ? "Es fehlt noch eine Stimme." : `Es fehlen noch ${c} Stimmen.`;
   const newId = () => {
     try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
     return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
@@ -407,7 +409,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     } else {
       h += `<div class="status-top"><span class="count">${n}<small>/${EXPECTED}</small></span><span><b>${allVoted() ? "Alle haben abgestimmt" : "haben abgestimmt"}</b></span></div>
         <div class="slots" role="img" aria-label="${n} von ${EXPECTED} Stimmzetteln abgegeben">${Array.from({ length: EXPECTED }, (_, i) => `<span class="slot ${i < n ? "filled" : ""}">${i < n ? ICON_CHECK : ""}</span>`).join("")}</div>`;
-      if (!reveal) h += `<p class="note">${n === 0 ? "Noch hat niemand abgestimmt. Fang du an!" : `Es fehlen noch ${plural(Math.max(EXPECTED - n, 0), "Stimme", "Stimmen")}.`}</p>`;
+      if (!reveal) h += `<p class="note">${n === 0 ? "Noch hat niemand abgestimmt. Fang du an!" : missing(Math.max(EXPECTED - n, 0))}</p>`;
     }
     h += `</section>`;
 
@@ -431,7 +433,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
 
     if (isHost() && st.status === "ready") h += hostPanel();
     h += `<a class="btn block" href="fragen/">Eigene Frage einreichen ${ICON_ARROW}</a>`;
-    h += `<footer>Die Stimmzettel enthalten keine Namen und laufen über den Dienst ntfy.sh und werden alle paar Stunden im GitHub-Repo gesichert.</footer>`;
+    h += `<footer>Die Stimmzettel enthalten keine Namen. Sie laufen über den Dienst ntfy.sh und werden stündlich im GitHub-Repo gesichert.</footer>`;
     return h;
   }
 
@@ -445,7 +447,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   function hostPanel() {
     let h = `<section class="card host" aria-label="Spielleitung"><div><h2>Spielleitung</h2><p class="note">Diesen Bereich sieht nur, wer die Seite mit #leitung am Ende öffnet.</p></div>`;
     if (ui.confirm === "reveal") {
-      h += `<div class="confirm"><p><b>Ranking jetzt für alle zeigen?</b> Es fehlen noch ${plural(Math.max(EXPECTED - st.ballots.length, 0), "Stimme", "Stimmen")}.</p>
+      h += `<div class="confirm"><p><b>Ranking jetzt für alle zeigen?</b> ${missing(Math.max(EXPECTED - st.ballots.length, 0))}</p>
         <div class="row-btns"><button class="btn small primary" data-act="doReveal" ${ui.busy ? "disabled" : ""}>Ja, auflösen</button><button class="btn small" data-act="cancel">Abbrechen</button></div></div>`;
     } else if (ui.confirm === "reset") {
       h += `<div class="confirm"><p><b>Neue Runde starten?</b> Die Stimmen dieser Woche zählen dann nicht mehr. Die Fragen bleiben dieselben, neue kommen am Sonntag um ${SWITCH_HOUR} Uhr.</p>
@@ -492,7 +494,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
       <section class="card center" style="padding:28px 18px">
         <div class="bigicon">${ICON_CHECK}</div>
         <p class="title2">Danke fürs Abstimmen!</p>
-        <p class="note">Deine Stimmen sind anonym abgegeben.${left ? ` Es fehlen noch ${plural(left, "Stimme", "Stimmen")}.` : " Damit sind alle durch."}</p>
+        <p class="note">Deine Stimmen wurden anonym abgegeben.${left ? " " + missing(left) : " Damit sind alle durch."}</p>
         <div class="row-btns" style="width:100%">
           <button class="btn ${left ? "" : "primary"}" data-act="home">${left ? "Zur Übersicht" : "Zum Ranking"}</button>
           ${left ? `<button class="btn" data-act="start">Nächste Person auf diesem Handy</button>` : ""}

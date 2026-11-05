@@ -163,7 +163,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     h += `<section class="card" aria-label="Warteschlange">
       <div class="stat"><span class="count">${waiting.length}</span><b>${waiting.length === 1 ? "Frage wartet" : "Fragen warten"}</b></div>
       <p class="note">${waiting.length
-        ? `In der ${weekText(cur + 1)} ${next === 1 ? "kommt 1" : `kommen ${next}`} davon dran${next < WIAE.PER_WEEK ? `, die restlichen ${WIAE.PER_WEEK - next} Plätze füllen die Standardfragen` : ""}.`
+        ? `In der ${weekText(cur + 1)}, ${next === 1 ? "kommt 1" : `kommen ${next}`} davon dran${next < WIAE.PER_WEEK ? `, die restlichen ${WIAE.PER_WEEK - next} Plätze füllen die Standardfragen` : ""}.`
         : `Gerade wartet nichts. Nächste Woche gibt es nur Standardfragen, außer du reichst jetzt etwas ein.`}
         Was du nach Sonntag ${SWITCH_HOUR} Uhr einreichst, ist frühestens in der Woche danach dran.</p>
     </section>`;
@@ -228,7 +228,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
       if (ev) { st.events.push(ev); addMine(ev.id); }
       const s = ev && plan().subs.find((x) => x.id === ev.id);
       st.draft = "";
-      st.ok = s && s.week !== undefined ? `Danke! Deine Frage ist voraussichtlich in der ${weekText(s.week)} dran.` : "Danke! Deine Frage ist in der Warteschlange.";
+      st.ok = s && s.week !== undefined ? `Danke! Deine Frage ist voraussichtlich in der ${weekText(s.week)}, dran.` : "Danke! Deine Frage ist in der Warteschlange.";
     } catch (e) {
       st.msg = e && e.status === 429 ? "Gerade kommen zu viele Anfragen an. Warte kurz und versuch es nochmal." : "Senden hat nicht geklappt. Prüf das Internet und versuch es nochmal.";
     }
