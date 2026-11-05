@@ -189,7 +189,8 @@ a.btn { text-decoration: none; }
   background: repeating-linear-gradient(-45deg, transparent 0 10px, var(--track) 10px 20px);
 }
 .ranks { display: flex; flex-direction: column; gap: 10px; }
-.rk { display: grid; grid-template-columns: 32px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.rk { display: grid; grid-template-columns: 32px 44px minmax(0, 1fr) 12ch; align-items: center; gap: 10px; }
+.rk > .av { justify-self: center; }
 .medal { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-family: var(--f-mono); font-weight: 700; color: var(--on-medal); border: 2px solid var(--border); }
 .m1 { background: var(--gold); } .m2 { background: var(--silver); } .m3 { background: var(--bronze); }
 .mx { background: var(--track); color: var(--ink); }
@@ -199,7 +200,7 @@ a.btn { text-decoration: none; }
 .rk.first b { font-size: 20px; }
 .bar { height: 10px; border-radius: 99px; background: var(--track); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--accent); }
-.votes { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.votes { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; white-space: nowrap; text-align: right; }
 .pop { animation: pop .5s cubic-bezier(.2, 1.4, .4, 1) both; }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.94); } to { opacity: 1; transform: none; } }
 .rcard.total { border-width: 3px; box-shadow: 6px 6px 0 var(--shadow-c); }
@@ -508,18 +509,18 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     }
     return { list: Object.entries(c).sort((a, b) => b[1] - a[1] || NAMES.indexOf(a[0]) - NAMES.indexOf(b[0])), n };
   }
-  // Platzierung mit Gleichstand: 5, 3, 3, 1 Stimmen -> Platz 1, 2, 2, 4
+  // Platzierung mit Gleichstand, ohne Lücken: 5, 3, 3, 1 Stimmen -> Platz 1, 2, 2, 3
   function ranked(list) {
     let rank = 0, prev = null;
-    return list.map(([name, count], i) => {
-      if (count !== prev) { rank = i + 1; prev = count; }
+    return list.map(([name, count]) => {
+      if (count !== prev) { rank++; prev = count; }
       return { name, count, rank };
     });
   }
   const topThree = (list) => ranked(list).filter((r) => r.rank <= 3);
   // Unter jedem Ranking: alle Stimmen zählen, auch die für Platz 4 und dahinter
   function rankSummary(key, all, shown, total, unit) {
-    const rest = total - shown.reduce((s, r) => s + r.count, 0);
+    const rest = ui.all[key] ? 0 : total - shown.reduce((s, r) => s + r.count, 0);
     const more = all.length > shown.length;
     return `<div class="rsum"><p class="note">${plural(total, unit[0], unit[1])} insgesamt${rest > 0 ? `, davon ${rest} für weitere Personen` : ""}</p>
       ${more || ui.all[key] ? `<button class="link" data-act="toggleAll" data-arg="${key}">${ui.all[key] ? "Weniger anzeigen" : `Alle ${all.length} anzeigen`}</button>` : ""}</div>`;
