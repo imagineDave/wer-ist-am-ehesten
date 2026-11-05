@@ -104,6 +104,7 @@ h1, h2 { text-wrap: balance; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); }
 .btn.small { font-size: 15px; min-height: 42px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--shadow-c); }
 .btn.block { width: 100%; }
+a.btn { text-decoration: none; }
 .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
 .btn svg { width: 20px; height: 20px; flex: none; }
 .link {
@@ -221,6 +222,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
 <body>
 <div id="app" class="wrap" aria-live="polite"></div>
 <noscript><p style="padding:16px">Bitte JavaScript aktivieren, sonst klappt die Abstimmung nicht.</p></noscript>
+<script src="shared.js"></script>
 
 <script>
 (() => {
@@ -235,8 +237,8 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   const NAMES = ["Sarah", "Liya", "Ronja", "David", "Luis", "Levin", "Moritz", "Jannis", "Joni", "Theo", "Ronon"];
   const HUES  = [345, 18, 40, 200, 150, 265, 95, 225, 300, 175, 120];
   const EXPECTED = NAMES.length; // so viele Stimmzettel braucht es bis zur Auflösung
-  const PER_DAY = 16;            // Fragen pro Woche (Name historisch)
-  const SWITCH_HOUR = 22;        // Wechsel jeden Sonntag um 22 Uhr deutscher Zeit
+  const { SWITCH_HOUR, berlinDay, dayNumber, dateLabel, esc, normalize } = WIAE;
+  const PER_DAY = WIAE.PER_WEEK; // Fragen pro Woche (Name historisch)
 
   // ---------- Fragen der Woche ----------
   // Der Pool steht in questions.json. Neue Fragen bitte immer HINTEN anhängen,
@@ -245,22 +247,11 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   // Ablauf: Alle Fragen werden gemischt (mit festem Startwert, damit jedes Handy dieselbe
   // Reihenfolge bekommt). Jede Woche kommen die nächsten 16 dran. Erst wenn der Pool
   // durch ist (bei 500 Fragen nach 31 Wochen), wird neu gemischt.
+  //
+  // Eingereichte Fragen (Seite /fragen/) haben Vorrang: Sie kommen in der Woche nach dem
+  // Einreichen dran, die übrigen Plätze füllen die Fragen aus dem Pool (siehe shared.js).
   let QUESTIONS = [];
-
-  // Wanduhrzeit in Berlin als "UTC-Millisekunden" (Sommer-/Winterzeit erledigt Intl)
-  function berlinWallMs(d) {
-    const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
-    }).formatToParts(d).map((x) => [x.type, x.value]));
-    return Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute);
-  }
-  // Wochennummer: Uhr um 2 Stunden vorstellen, dann ist "Sonntag 22 Uhr" = "Montag 0 Uhr"
-  function berlinDay(d = new Date()) {
-    const days = Math.floor((berlinWallMs(d) + (24 - SWITCH_HOUR) * 3600000) / 86400000);
-    return "w" + Math.floor((days + 3) / 7); // 1.1.1970 war ein Donnerstag, +3 richtet auf Montag aus
-  }
-  function dayNumber(key) { return parseInt(key.slice(1), 10); }
+  let SUBMISSIONS = [];
   function rng(seed) { // mulberry32: kleiner Zufallsgenerator, der aus demselben Startwert immer dieselben Zahlen macht
     return () => {
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -315,11 +306,17 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     const order = cycleOrder(Math.floor(n / perCycle), pool.length, perCycle);
     const slot = n % perCycle;
     return order.slice(slot * PER_DAY, slot * PER_DAY + PER_DAY)
-      .map((i) => ({ id: "p" + i, tag: pool[i].t, text: pool[i].q }));
+      .map((i) => ({ id: "p" + i, tag: esc(pool[i].t), text: esc(pool[i].q), raw: pool[i].q }));
   }
-  // Ende der Woche: der Sonntag, an dem um 22 Uhr gewechselt wird
-  const dateLabel = (key) => new Date((dayNumber(key) * 7 + 3) * 86400000)
-    .toLocaleDateString("de-DE", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+  // Die 16 Fragen einer Woche: zuerst die eingereichten, dann auffüllen aus dem Pool
+  function weekQuestions(day) {
+    const n = dayNumber(day);
+    const mine = (WIAE.schedule(SUBMISSIONS, n).byWeek.get(n) || [])
+      .map((s) => ({ id: s.id, tag: esc(WIAE.USER_TAG), text: esc(s.text), raw: s.text }));
+    const taken = new Set(mine.map((q) => normalize(q.raw)));
+    const fill = questionsFor(day, POOL).filter((q) => !taken.has(normalize(q.raw)));
+    return mine.concat(fill).slice(0, PER_DAY).map(({ raw, ...q }) => q);
+  }
 
   const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   const ICON_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
@@ -424,6 +421,7 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     }
 
     if (isHost() && st.status === "ready") h += hostPanel();
+    h += `<a class="btn block" href="fragen/">Eigene Frage einreichen ${ICON_ARROW}</a>`;
     h += `<footer>Die Stimmzettel enthalten keine Namen und laufen über den Dienst ntfy.sh und werden alle paar Stunden im GitHub-Repo gesichert.</footer>`;
     return h;
   }
@@ -670,8 +668,10 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
         const res = await fetch("questions.json", { cache: "no-cache" });
         if (!res.ok) throw new Error("questions.json: HTTP " + res.status);
         POOL = (await res.json()).filter((p) => p && typeof p.q === "string");
-        QUESTIONS = questionsFor(st.day, POOL);
       }
+      // Eingereichte Fragen jedes Mal frisch laden: Fehlt hier etwas, würde dieses Handy andere Fragen zeigen
+      SUBMISSIONS = await WIAE.loadSubmissions();
+      if (!QUESTIONS.length || ui.view !== "q") QUESTIONS = weekQuestions(st.day);
       // ntfy.sh vergisst nach ~12 Stunden. Die GitHub Action sichert alle 3 Stunden
       // alles ins Repo (votes-archive.json); das lesen wir zusätzlich ein.
       try {
@@ -710,11 +710,22 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
   window.addEventListener("hashchange", render);
 
   // Sonntag 22 Uhr auf die neue Woche umschalten (nicht mitten in einer Abstimmung)
-  setInterval(() => {
+  let switching = false;
+  setInterval(async () => {
     const today = berlinDay();
-    if (today === st.day || !POOL.length || ui.view === "q") return;
+    if (today === st.day || !POOL.length || ui.view === "q" || switching) return;
+    switching = true;
+    try {
+      // Was bis kurz vor dem Wechsel eingereicht wurde, gehört in die neue Woche
+      SUBMISSIONS = await WIAE.loadSubmissions();
+    } catch (e) {
+      switching = false; // nächste Minute nochmal probieren, nicht mit unvollständigen Daten wechseln
+      return;
+    }
+    switching = false;
+    if (ui.view === "q") return;
     st.day = today;
-    QUESTIONS = questionsFor(today, POOL);
+    QUESTIONS = weekQuestions(today);
     ui.open = {};
     derive();
     if (ui.view === "done") ui.view = "home";
