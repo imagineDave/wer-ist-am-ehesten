@@ -105,6 +105,8 @@ h1, h2 { text-wrap: balance; }
 .btn.small { font-size: 15px; min-height: 42px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--shadow-c); }
 .btn.block { width: 100%; }
 a.btn { text-decoration: none; }
+.btn.tiny { font-size: 14px; min-height: 36px; padding: 5px 12px; border-radius: 10px; box-shadow: 2px 2px 0 var(--shadow-c); white-space: nowrap; }
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
 .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
 .btn svg { width: 20px; height: 20px; flex: none; }
 .link {
@@ -390,7 +392,8 @@ footer { font-size: 13px; color: var(--muted); text-align: center; padding-top: 
     const reveal = st.status === "ready" && showResults();
     let h = `
       <header class="hero">
-        <p class="eyebrow">Diese Woche · bis ${dateLabel(st.day)}, ${SWITCH_HOUR} Uhr</p>
+        <div class="hero-top"><p class="eyebrow">Diese Woche · bis ${dateLabel(st.day)}, ${SWITCH_HOUR} Uhr</p>
+          <a class="btn tiny" href="fragen/">+ Frage einreichen</a></div>
         <h1>Wer ist am <span class="hl">ehesten</span> …?</h1>
         <p class="lede">Jede Woche ${PER_DAY} neue Fragen über euch elf. Niemand sieht, wen du gewählt hast. Sobald alle ${EXPECTED} abgestimmt haben, zeigt die Seite für jede Frage Platz 1 bis 3.</p>
       </header>`;
